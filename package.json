@@ -1,0 +1,20 @@
+{
+  "name": "cloud-sync",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.4.0"
+  },
+  "dependencies": {
+    "config": "^3.3.6",
+    "dayjs": "^1.10.4",
+    "lodash": "^4.17.21",
+    "mongodb": "^3.6.6"
+  },
+  "devDependencies": {
+    "@types/jest": "^26.0.22",
+    "faker": "^5.5.2",
+    "jest": "^26.6.3"
+  }
+}

@@ -1,0 +1,18 @@
+image: docker:stable
+
+variables:
+  REGISTRY_GROUP: sigma-livestream
+  IMAGE: $REGISTRY/$REGISTRY_GROUP/$CI_PROJECT_NAME
+
+stages:
+  - deploy
+  
+DeployImage:
+  stage: deploy
+  tags:
+    - dind
+  script:
+    - docker info
+    - docker build . -t $IMAGE
+    - docker login -u $HARBOR_USERNAME -p $HARBOR_PASSWORD $REGISTRY
+    - docker push $IMAGE

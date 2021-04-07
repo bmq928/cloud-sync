@@ -1,0 +1,8 @@
+{
+  "maxProcessPerBatch": 5,
+  "startTime": 300,
+  "rootLocal": "/home/bmq928/cloud-sync-root",
+  "rootS3": "/storage",
+  "executor": "s3cmd",
+  "timeRange": 3 //hour
+}
