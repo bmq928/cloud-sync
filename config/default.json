@@ -2,7 +2,8 @@
   "maxProcessPerBatch": 5,
   "startTime": 300,
   "rootLocal": "/home/bmq928/cloud-sync-root",
-  "rootS3": "/storage",
+  "rootS3": "/gviet",
   "executor": "s3cmd",
+  "executorLog": true,
   "timeRange": 3 //hour
 }

@@ -39,6 +39,11 @@ function exec(script) {
     const [cmd, ...args] = _.compact(script.split(' '))
     const ps = spawn(cmd, args)
 
+    if(config.get('executorLog')) {
+      ps.stdout.on('data', data => console.log('output: ', data.toString()))
+      ps.stderr.on('data', data => console.log('err: ', data.toString()))
+    }
+
     ps.on('close', (code, signal) => {
       console.log({ script, code, signal, event: 'close' })
 
