@@ -1,9 +1,16 @@
 {
   "maxProcessPerBatch": 5,
-  "startTime": 300,
+  "processSpawnTime": 300, //time for each process to gradulallly start
   "rootLocal": "/home/bmq928/cloud-sync-root",
-  "rootS3": "/gviet",
-  "executor": "s3cmd",
-  "executorLog": true,
-  "timeRange": 3 //hour
+  "rootS3": "/gviet", // /bucket + root folder
+  "executor": "s3cmd", // binary cmd to execute
+  "executorLog": true, // should log cmd binary or not
+  "timeRange": {
+    "sync": 3, //hour, folder has name in range [now - duartion, now] will be sync
+    "preserve": 2 //hours, folder has name in range [now - duartion, now] will be not deleted when sync finished
+  },
+  "redis": {
+    "port": 6379,
+    "host": "127.0.0.1"
+  }
 }

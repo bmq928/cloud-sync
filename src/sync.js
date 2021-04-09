@@ -1,4 +1,5 @@
 const { spawn } = require('child_process')
+const { checkpoint } = require('./db')
 const dayjs = require('dayjs')
 const _ = require('lodash')
 const path = require('path')
@@ -7,22 +8,26 @@ const config = require('config')
 const ROOT_LOCAL = config.get('rootLocal')
 const ROOT_S3 = config.get('rootS3')
 
-function sync(localDir) {
+function syncS3(localDir) {
   const startTime = dayjs()
   const cp = () => exec(genScript('put', localDir))
   const sync = () => exec(genScript('sync', localDir))
-  const rm = () => exec(`rm -rf ${localDir}`)
 
   return Promise.resolve()
     .then(cp)
     .catch(sync)
-    .then(rm)
-    .catch((err) => console.log(err))
+    .then(() => checkpoint(localDir))
+    .catch(console.error)
     .finally(() =>
       console.log(
         `finished sync ${localDir} in ${dayjs().diff(startTime, 'second')}s`
       )
     )
+}
+
+async function cleanLocal(...dirs) {
+  await exec(`rm -rf ${dirs.join(' ')}`)
+  console.log(`removed success ${dirs.join()}`)
 }
 
 function genScript(command, localDir) {
@@ -39,9 +44,9 @@ function exec(script) {
     const [cmd, ...args] = _.compact(script.split(' '))
     const ps = spawn(cmd, args)
 
-    if(config.get('executorLog')) {
-      ps.stdout.on('data', data => console.log('output: ', data.toString()))
-      ps.stderr.on('data', data => console.log('err: ', data.toString()))
+    if (config.get('executorLog')) {
+      ps.stdout.on('data', (data) => console.log('output: ', data.toString()))
+      ps.stderr.on('data', (data) => console.log('err: ', data.toString()))
     }
 
     ps.on('close', (code, signal) => {
@@ -65,4 +70,4 @@ function exec(script) {
   })
 }
 
-module.exports = { sync }
+module.exports = { syncS3, cleanLocal }

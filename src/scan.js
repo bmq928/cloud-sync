@@ -4,6 +4,7 @@ const config = require('config')
 const dayjs = require('dayjs')
 const { ObjectID } = require('mongodb')
 const _ = require('lodash')
+const { checkSync } = require('./db')
 
 const ROOT_FOLDER = config.get('rootLocal')
 
@@ -37,14 +38,13 @@ async function findTargetType(channel, target) {
   return type
 }
 
-async function findTimeDirs(channel, target, timestamp) {
+async function findTimeDirs(channel, target, from, range) {
   const type = await findTargetType(channel, target)
   const targetDir = path.join(ROOT_FOLDER, channel, target)
 
-  const timeRange = config.get('timeRange')
-  const cur = dayjs(timestamp)
-  const folders = _.range(timeRange).map((h) =>
-    cur.subtract(h, 'hour').format('YYYYMMDDHH')
+  const pivot = dayjs.utc(from)
+  const folders = _.range(range).map((h) =>
+    pivot.subtract(h + 1, 'hour').format('YYYYMMDDHH')
   )
 
   if (type === 'dash')
@@ -58,8 +58,10 @@ async function findTimeDirs(channel, target, timestamp) {
     .flat()
 }
 
-async function findSyncDirs(channel, target, timestamp) {
-  const dirs = await findTimeDirs(channel, target, timestamp)
+async function findSyncDirs(channel, target, from) {
+  const range = config.get('timeRange.sync')
+  const dirs = await findTimeDirs(channel, target, from, range)
+
   const isExists = await Promise.all(
     dirs.map((dir) =>
       fs.promises
@@ -68,10 +70,26 @@ async function findSyncDirs(channel, target, timestamp) {
         .catch(() => false)
     )
   )
-  const syncDirs = _.zip(dirs, isExists)
+  const existedDirs = _.zip(dirs, isExists)
     .filter(([, isExist]) => isExist)
     .map(([dir]) => dir)
+
+  const isSyncs = await checkSync(...existedDirs)
+  const syncDirs = _.zip(existedDirs, isSyncs)
+    .filter(([, isSync]) => !isSync)
+    .map(([dir]) => dir)
+
   return syncDirs
 }
 
-module.exports = { findChannels, findTargets, findTargetType, findSyncDirs }
+async function findCleanDirs(channel, target, from) {
+  const preserveRange = config.get('timeRange.preserve')
+  const preserveDirs = await findTimeDirs(channel, target, from, preserveRange)
+
+  const syncDirs = await findSyncDirs(channel, target, from)
+  
+  const cleanDirs = syncDirs.filter(dir => preserveDirs.includes(dir))
+  return cleanDirs
+}
+
+module.exports = { findChannels, findTargets, findTargetType, findSyncDirs, findCleanDirs }
