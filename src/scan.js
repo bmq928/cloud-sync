@@ -1,4 +1,4 @@
-const fs = require('fs')
+  const fs = require('fs')
 const path = require('path')
 const config = require('config')
 const dayjs = require('dayjs')
@@ -43,18 +43,26 @@ async function findTimeDirs(channel, target, from, range) {
   const targetDir = path.join(ROOT_FOLDER, channel, target)
 
   const pivot = dayjs.utc(from)
-  const folders = _.range(range).map((h) =>
+  const times = _.range(range).map((h) =>
     pivot.subtract(h + 1, 'hour').format('YYYYMMDDHH')
   )
 
-  if (type === 'dash')
-    return folders.map((folder) => path.join(targetDir, folder))
+  if (type === 'dash') {
+    const timeDirs = times.map((time) => path.join(targetDir, time))
+    const timeProfiles = await Promise.all(
+      timeDirs.map((dir) => fs.promises.readdir(dir))
+    )
+    return _.zip(timeDirs, timeProfiles)
+      .map(([timeDir, profiles]) =>
+        profiles.map((profile) => path.join(timeDir, profile))
+      )
+      .flat()
+  }
 
+  //hls
   const profiles = await fs.promises.readdir(targetDir)
   return profiles
-    .map((profile) =>
-      folders.map((folder) => path.join(targetDir, profile, folder))
-    )
+    .map((profile) => times.map((time) => path.join(targetDir, profile, time)))
     .flat()
 }
 
@@ -87,9 +95,15 @@ async function findCleanDirs(channel, target, from) {
   const preserveDirs = await findTimeDirs(channel, target, from, preserveRange)
 
   const syncDirs = await findSyncDirs(channel, target, from)
-  
-  const cleanDirs = syncDirs.filter(dir => preserveDirs.includes(dir))
+
+  const cleanDirs = syncDirs.filter((dir) => preserveDirs.includes(dir))
   return cleanDirs
 }
 
-module.exports = { findChannels, findTargets, findTargetType, findSyncDirs, findCleanDirs }
+module.exports = {
+  findChannels,
+  findTargets,
+  findTargetType,
+  findSyncDirs,
+  findCleanDirs,
+}

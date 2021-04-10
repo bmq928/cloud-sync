@@ -15,8 +15,8 @@ function syncS3(localDir) {
 
   return Promise.resolve()
     .then(cp)
-    .catch(sync)
     .then(() => checkpoint(localDir))
+    .catch(sync)
     .catch(console.error)
     .finally(() =>
       console.log(
@@ -25,9 +25,9 @@ function syncS3(localDir) {
     )
 }
 
-async function cleanLocal(...dirs) {
-  await exec(`rm -rf ${dirs.join(' ')}`)
-  console.log(`removed success ${dirs.join()}`)
+function cleanLocal(...dirs) {
+  if (!dirs.length) return Promise.resolve()
+  return exec(`rm -rf ${dirs.join(' ')}`)
 }
 
 function genScript(command, localDir) {
